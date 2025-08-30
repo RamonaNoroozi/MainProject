@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerClimb : MonoBehaviour
 {
     public float climbSpeed = 4f;
@@ -7,6 +8,7 @@ public class PlayerClimb : MonoBehaviour
     private bool isClimbing = false;
     private Rigidbody2D rb;
     private float originalGravity;
+    private float verticalInput;
 
     void Start()
     {
@@ -18,25 +20,26 @@ public class PlayerClimb : MonoBehaviour
     {
         if (isOnLadder)
         {
-            float vertical = Input.GetAxisRaw("Vertical");
+            verticalInput = Input.GetAxisRaw("Vertical");
 
-            if (Mathf.Abs(vertical) > 0.1f)
-            {
+            if (Mathf.Abs(verticalInput) > 0.1f)
                 isClimbing = true;
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, vertical * climbSpeed);
-                rb.gravityScale = 0f;
-            }
-            else if (isClimbing)
-            {
-                // Stop movement when key released
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-            }
+            else
+                isClimbing = false;
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (isClimbing && isOnLadder)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, verticalInput * climbSpeed);
+            rb.gravityScale = 0f;
         }
         else
         {
-            if (isClimbing)
+            if (!isOnLadder)
             {
-                isClimbing = false;
                 rb.gravityScale = originalGravity;
             }
         }
@@ -46,7 +49,7 @@ public class PlayerClimb : MonoBehaviour
     {
         isOnLadder = value;
 
-        if (!value && isClimbing)
+        if (!value)
         {
             isClimbing = false;
             rb.gravityScale = originalGravity;

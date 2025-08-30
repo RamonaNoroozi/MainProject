@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Signup.unity
+    guid: 181ee223759f55e47aa765e801addc4b
+  - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: 8fb2ce7784792f94cb967a9998c42349
   - enabled: 1
@@ -18,8 +21,11 @@ EditorBuildSettings:
     path: Assets/Scenes/GameOver.unity
     guid: 1c9752a0adbb29f4f9d89b294be1abeb
   - enabled: 1
-    path: Assets/Scenes/Signup.unity
-    guid: 181ee223759f55e47aa765e801addc4b
+    path: Assets/Scenes/Win.unity
+    guid: ba8461638eb69fe47a13bd0f3c03c286
+  - enabled: 1
+    path: Assets/Scenes/Lose.unity
+    guid: f198a70909033a944ac8ab1d94f15632
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
