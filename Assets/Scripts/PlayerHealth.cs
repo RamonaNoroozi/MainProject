@@ -40,12 +40,20 @@ public class PlayerHealth : NetworkBehaviour
             playerStatsManager.Instance.LoadIntoPlayer(this);
         }
 
-        // Sync initial state
         if (IsServer)
         {
-            currentHealth.Value = maxHealth;
-            currentLives.Value = maxLives;
+            if (playerStatsManager.Instance != null)
+            {
+                playerStatsManager.Instance.LoadIntoPlayer(this);
+            }
+            else
+            {
+                // Fallback to defaults if no manager
+                currentHealth.Value = maxHealth;
+                currentLives.Value = maxLives;
+            }
         }
+
 
         // Listen for changes
         currentHealth.OnValueChanged += (oldVal, newVal) => OnHealthChanged?.Invoke(newVal, maxHealth);

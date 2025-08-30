@@ -60,32 +60,79 @@ public class PlayerSpawnerTest : NetworkBehaviour
     }
 
     private void SpawnOfflinePlayers()
+{
+    Debug.Log("[Spawner] Spawning OFFLINE players as NETWORK OBJECTS (host-only)...");
+
+    if (NetworkManager.Singleton == null)
     {
-        Debug.Log("[Spawner] Spawning offline players...");
-
-        var spawnedPlayers = new List<GameObject>();
-
-        // --- Spawn Shooter (Player 1) ---
-        var shooterGO = Instantiate(characters[0], new Vector3(-17, 7, 0), Quaternion.identity);
-        shooterGO.GetComponent<PlayerInput>()?.SwitchCurrentControlScheme("KeyboardLeft", Keyboard.current);
-        spawnedPlayers.Add(shooterGO);
-
-        // --- Spawn Melee (Player 2) ---
-        var meleeGO = Instantiate(characters[1], new Vector3(-17, 5, 0), Quaternion.identity);
-        meleeGO.GetComponent<PlayerInput>()?.SwitchCurrentControlScheme("KeyboardRight", Keyboard.current);
-        spawnedPlayers.Add(meleeGO);
-
-        // --- Assign the common camera to their movement scripts ---
-        AssignCameraToPlayerScripts(shooterGO, assignedCamera);
-        AssignCameraToPlayerScripts(meleeGO, assignedCamera);
-
-        // --- Initialize ChunkGenerator ---
-        if (chunkGenerator != null)
-            chunkGenerator.InitializeOfflineChunks(new Transform[] { shooterGO.transform, meleeGO.transform });
-
-        // Notify listeners
-        OnPlayerUpdated?.Invoke(spawnedPlayers.ToArray());
+        Debug.LogError("[Spawner] NetworkManager not found in scene — cannot spawn NetworkObjects.");
+        return;
     }
+
+    EnsureHostStartedForOffline();
+
+    var spawnedPlayers = new List<GameObject>();
+
+    // --- Spawn Shooter (Player 1) ---
+    var shooterGO = Instantiate(characters[0], new Vector3(-17, 7, 0), Quaternion.identity);
+    SpawnAsNetworkOwnedByHost(shooterGO);
+    shooterGO.GetComponent<PlayerInput>()?.SwitchCurrentControlScheme("KeyboardLeft", Keyboard.current);
+    AssignCameraToPlayerScripts(shooterGO, assignedCamera);
+    spawnedPlayers.Add(shooterGO);
+
+    // --- Spawn Melee (Player 2) ---
+    var meleeGO = Instantiate(characters[1], new Vector3(-17, 5, 0), Quaternion.identity);
+    SpawnAsNetworkOwnedByHost(meleeGO);
+    meleeGO.GetComponent<PlayerInput>()?.SwitchCurrentControlScheme("KeyboardRight", Keyboard.current);
+    AssignCameraToPlayerScripts(meleeGO, assignedCamera);
+    spawnedPlayers.Add(meleeGO);
+
+    // --- Initialize ChunkGenerator like before ---
+    if (chunkGenerator != null)
+        chunkGenerator.InitializeOfflineChunks(new Transform[] { shooterGO.transform, meleeGO.transform });
+
+    // Mirror the online setup: give boss & shooter device their targets
+    AssignBossAndShooterTargets(new Transform[] { shooterGO.transform, meleeGO.transform });
+
+    // Notify listeners
+    OnPlayerUpdated?.Invoke(spawnedPlayers.ToArray());
+}
+
+private void EnsureHostStartedForOffline()
+{
+    // If not already listening, start host. This will auto-create a PlayerObject for the host,
+    // which we immediately despawn since we spawn our own two characters.
+    if (!NetworkManager.Singleton.IsListening)
+    {
+        Debug.Log("[Spawner] Starting Host for offline mode...");
+        var started = NetworkManager.Singleton.StartHost();
+        if (!started)
+        {
+            Debug.LogError("[Spawner] Failed to StartHost().");
+            return;
+        }
+
+        var autoPlayer = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+        if (autoPlayer != null && autoPlayer.IsSpawned)
+        {
+            Debug.Log("[Spawner] Despawning auto-created host PlayerObject (offline uses custom characters).");
+            autoPlayer.Despawn(true);
+        }
+    }
+}
+
+private void SpawnAsNetworkOwnedByHost(GameObject go)
+{
+    var netObj = go.GetComponent<NetworkObject>();
+    if (netObj == null)
+    {
+        Debug.LogWarning($"[Spawner] Prefab '{go.name}' has no NetworkObject. Adding one at runtime (offline host-only is fine).");
+        netObj = go.AddComponent<NetworkObject>();
+    }
+
+    // Give ownership to the host (the only client in offline mode)
+    netObj.SpawnWithOwnership(NetworkManager.Singleton.LocalClientId);
+}
 
 // Helper method to assign camera to all relevant movement scripts
     private void AssignCameraToPlayerScripts(GameObject player, Camera cam)
