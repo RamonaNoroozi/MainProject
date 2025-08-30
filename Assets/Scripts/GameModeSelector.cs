@@ -1,16 +1,20 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
+using System.Diagnostics; // for Process.Start
+using System.IO;
 
 public class GameModeSelector : MonoBehaviour
 {
     public static GameModeSelector Instance;
 
-    [SerializeField] private bool isOnline = false; // ✅ false = offline/local, true = online
+    [SerializeField] private bool isOnline = false; // false = offline/local, true = online
+
+    // Path to your offline build executable
+    [SerializeField] private string offlineBuildPath = "OfflineGame.exe"; 
 
     private void Awake()
     {
-        // Singleton setup so this persists across scenes
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -23,20 +27,28 @@ public class GameModeSelector : MonoBehaviour
 
     public void ChooseLocalCoop()
     {
-        Debug.Log("Starting Local Coop...");
+        UnityEngine.Debug.Log("Launching Offline Build...");
+
         isOnline = false;
 
-        if (!NetworkManager.Singleton.IsListening)
-        {
-            NetworkManager.Singleton.StartHost(); // still use host but no real clients will join
-        }
+        string fullPath = Path.Combine(Application.dataPath, "..", offlineBuildPath);
+        fullPath = Path.GetFullPath(fullPath);
 
-        SceneManager.LoadScene("Level1");
+        if (File.Exists(fullPath))
+        {
+            Process.Start(fullPath);   // launch offline build
+            Application.Quit();        // close current build
+        }
+        else
+        {
+            //Debug.LogError("Offline build not found at: " + fullPath);
+        }
     }
 
     public void HostGame()
     {
-        Debug.Log("Hosting Online Game...");
+
+    //Debug.Log("Hosting Online Game...");
         isOnline = true;
 
         if (!NetworkManager.Singleton.IsListening)
@@ -49,7 +61,7 @@ public class GameModeSelector : MonoBehaviour
 
     public void JoinGame()
     {
-        Debug.Log("Joining Online Game...");
+        //.Log("Joining Online Game...");
         isOnline = true;
 
         if (!NetworkManager.Singleton.IsListening)
