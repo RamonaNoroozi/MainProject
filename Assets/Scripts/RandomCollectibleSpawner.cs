@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class RandomCollectibleSpawner : MonoBehaviour
 {
     [Header("Collectibles")]
-    public GameObject[] collectibles; // Just drag your 4 collectible prefabs here
+    public GameObject[] collectibles; // Drag collectible prefabs here
 
     [Header("Spawn Settings")]
     public int collectiblesToSpawn = 3;
@@ -27,10 +27,33 @@ public class RandomCollectibleSpawner : MonoBehaviour
         List<Transform> availablePoints = new List<Transform>(spawnPoints);
         Shuffle(availablePoints);
 
-        // Spawn collectibles
-        for (int i = 0; i < collectiblesToSpawn && i < shuffledCollectibles.Count && i < availablePoints.Count; i++)
+        int spawned = 0;
+
+        for (int i = 0; i < shuffledCollectibles.Count && spawned < collectiblesToSpawn && i < availablePoints.Count; i++)
         {
-            Instantiate(shuffledCollectibles[i], availablePoints[i].position, Quaternion.identity);
+            GameObject prefab = shuffledCollectibles[i];
+            Transform spawnPoint = availablePoints[i];
+
+            // ✅ Check if this collectible already saved as collected
+            UniqueID uid = prefab.GetComponent<UniqueID>();
+            if (uid != null && SaveTracker.Instance != null && SaveTracker.Instance.IsCollected(uid.id))
+            {
+                // Skip spawning if it was already collected
+                continue;
+            }
+
+            // Spawn collectible
+            GameObject spawnedObj = Instantiate(prefab, spawnPoint.position, Quaternion.identity);
+
+            // ✅ Re-check in case the spawned object gets a UniqueID
+            UniqueID spawnedUID = spawnedObj.GetComponent<UniqueID>();
+            if (spawnedUID != null && SaveTracker.Instance != null && SaveTracker.Instance.IsCollected(spawnedUID.id))
+            {
+                // Immediately disable if already marked as collected
+                spawnedObj.SetActive(false);
+            }
+
+            spawned++;
         }
     }
 

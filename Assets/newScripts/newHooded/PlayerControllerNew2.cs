@@ -54,22 +54,31 @@ public class PlayerControllerNew2 : MonoBehaviour, IPlayerInputBlocker, IPlayerC
             //animator.SetFloat("magnitude", 0);
             return;
         }
+         // Check for climb input while on ladder
         if (_isOnLadder)
         {
-            float climbInput = _frameInput.Move.y;
+            float climbInput = 0f;
 
+            // W key / Jump key climbs up
+            if (_frameInput.JumpDown)
+                climbInput = 1f;
+
+            // S key / Down arrow key climbs down
+            if (_frameInput.Move.y < 0f)
+                climbInput = _frameInput.Move.y;
+
+            // If any vertical input
             if (Mathf.Abs(climbInput) > 0.1f)
             {
                 if (!_isClimbing)
-                {
                     StartClimbing();
-                }
 
                 _rb.gravityScale = 0f;
                 _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, climbInput * climbSpeed);
             }
             else if (_isClimbing)
             {
+                // Stop moving on ladder when no input
                 _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, 0f);
             }
         }
