@@ -62,6 +62,6 @@ public class CharacterSelectDisplay : MonoBehaviour
         }
 
         Debug.Log("Loading MainMenu for all players...");
-        NetworkManager.Singleton.SceneManager.LoadScene("Level3", LoadSceneMode.Single);
+        NetworkManager.Singleton.SceneManager.LoadScene("Level1",LoadSceneMode.Single);
     }
 }

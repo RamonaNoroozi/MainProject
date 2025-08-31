@@ -128,6 +128,7 @@ public class PlayerHealth : NetworkBehaviour
     // ========== DEATH ==========
     private void Die(bool final)
     {
+
         isDead = true;
         isInvincible = true;
         // if (IsServer && inputBlocker != null)
@@ -136,11 +137,14 @@ public class PlayerHealth : NetworkBehaviour
         // inputBlocker.isInputBlockedNet.Value = true;
 
         DieClientRpc(final);
+        
+        if (currentLives.Value <= 0)
+            NetworkManager.Singleton.SceneManager.LoadScene("Lose", LoadSceneMode.Single);
 
         if (final)
-        {
-            StartCoroutine(LoadGameOverAfterDeathAnimation());
-        }
+            {
+                StartCoroutine(LoadGameOverAfterDeathAnimation());
+            }
     }
 
     [ClientRpc]
